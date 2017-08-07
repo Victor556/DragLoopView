@@ -2,11 +2,12 @@ package com.example.victo.kotlintest2
 
 import android.content.Context
 import android.graphics.*
+import android.support.annotation.FloatRange
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import guide.context.example03.log
+import android.widget.Toast
 
 /**
  * Created by victo on 2017/8/3.
@@ -64,10 +65,11 @@ class CustomView @JvmOverloads constructor(
     val offsetAngle = -180
     var mStartAngle = 0f
     var mSweepAngle = 50f
+
     var mEndAngle
-        get() = mStartAngle + offsetAngle + mSweepAngle
+        get() = mStartOffsetAngle + mSweepAngle
         set(value) {
-            mSweepAngle = (value - (mStartAngle + offsetAngle) + 360) % 360
+            mSweepAngle = (value - mStartOffsetAngle + 360) % 360
         }
 
     var mStartOffsetAngle
@@ -85,9 +87,9 @@ class CustomView @JvmOverloads constructor(
         get() = (width - strokeWidthBig) / 2f - padding
 
     val startPt
-        get() = getPoint(mStartAngle + offsetAngle)
+        get() = getPoint(mStartOffsetAngle)
     val endPt
-        get() = getPoint(mStartAngle + offsetAngle + mSweepAngle)
+        get() = getPoint(mStartOffsetAngle + mSweepAngle)
 
     override fun onDraw(canvas: Canvas?) {
         canvas ?: return
@@ -97,7 +99,7 @@ class CustomView @JvmOverloads constructor(
         val radius = width / 2f - paddingLeft - strokeWidthBig
         canvas.drawCircle(mCenterX, mCenterY, radius, paintCircleBkg)
         canvas.drawArc(rectBkg.toFloat.apply { inset(strokeWidthBig / 2f, strokeWidthBig / 2f) },
-                mStartOffsetAngle % 360, mSweepAngle, false, paintGray)
+                mStartOffsetAngle % 360, -(360f - mSweepAngle), false, paintGray)
         val pt0 = startPt
         canvas.drawCircle(pt0.x, pt0.y, mRadiusPoint, paintCircleBkg)
         canvas.drawCircle(pt0.x, pt0.y, mRadiusPoint, paintStrokeGreen)
@@ -121,6 +123,7 @@ class CustomView @JvmOverloads constructor(
 
     fun isInCircle(pt0: PointF, pt1: PointF, r: Float = mRadiusPoint) = Math.pow((pt0.x - pt1.x).toDouble(), 2.0) + Math.pow((pt0.y - pt1.y).toDouble(), 2.0) <= r * r
 
+    var toast: Toast? = null
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event ?: return super.onTouchEvent(event)
         val x = event.x
@@ -144,7 +147,14 @@ class CustomView @JvmOverloads constructor(
             MotionEvent.ACTION_MOVE -> {
                 if (stat != Stat.none) {
                     val absAngle = getAbsAngle(p) % 360
-                    if (stat == Stat.start) mStartOffsetAngle = absAngle else mEndAngle = absAngle
+                    if (stat == Stat.start) {
+                        if (startPointMovable) mStartOffsetAngle = absAngle
+                    } else {
+                        mEndAngle = absAngle
+                    }
+
+                    toast?.cancel()
+                    toast = Toast.makeText(context, "value:${value.toInt()} percentage:${(value / maxValue * 100).toInt()}%", Toast.LENGTH_LONG).apply { show() }
                     postInvalidate()
                     return true
                 } else {
@@ -173,4 +183,21 @@ class CustomView @JvmOverloads constructor(
 
     val Rect.toFloat: RectF
         get() = RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+
+
+    var maxValue = 360
+    var value
+        get() = mSweepAngle / 360f * maxValue
+        set(value) {
+            mSweepAngle = value / maxValue * 360f % maxValue
+        }
+
+    var startPointMovable = false
+
+    var proportion:Float
+        get() = value / maxValue
+        @FloatRange(from = 0.0, to = 1.0, toInclusive = true)
+        set(v) {
+            value = v * maxValue % maxValue
+        }
 }
