@@ -11,7 +11,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val v = findViewById(R.id.view) as CustomView
-        v.maxValue=1024
+        v.maxValue=10240
         v.proportion = 0.8f
     }
 }

@@ -62,18 +62,18 @@ class CustomView @JvmOverloads constructor(
     val mCenterY
         get() = height / 2f
 
-    val offsetAngle = -180
+    val offsetAngle = 180
     var mStartAngle = 0f
     var mSweepAngle = 50f
 
     var mEndAngle
-        get() = mStartOffsetAngle + mSweepAngle
+        get() = (mStartOffsetAngle + mSweepAngle) % 360
         set(value) {
-            mSweepAngle = (value - mStartOffsetAngle + 360) % 360
+            mSweepAngle = if (value >= 360f) 360f else ((value - mStartOffsetAngle + 360) % 360)
         }
 
     var mStartOffsetAngle
-        get() = mStartAngle + offsetAngle
+        get() = (mStartAngle + offsetAngle) % 360
         set(value) {
             val end = mEndAngle
             val diff = value - mStartOffsetAngle
@@ -150,7 +150,20 @@ class CustomView @JvmOverloads constructor(
                     if (stat == Stat.start) {
                         if (startPointMovable) mStartOffsetAngle = absAngle
                     } else {
-                        mEndAngle = absAngle
+                        if (enableLoop) {
+                            mEndAngle = absAngle
+                        } else {
+                            val diff = absAngle - mStartOffsetAngle
+                            //val sweep = absAngle - mStartOffsetAngle
+                            val limit = 40
+                            if (mSweepAngle <= limit && diff < 0) {
+                                mSweepAngle = 0.000001f
+                            } else if (mSweepAngle >= 360 - limit && diff > 0) {
+                                mSweepAngle = 360f
+                            } else {
+                                mEndAngle = absAngle
+                            }
+                        }
                     }
 
                     toast?.cancel()
@@ -200,4 +213,6 @@ class CustomView @JvmOverloads constructor(
         set(v) {
             value = v * maxValue % maxValue
         }
+
+    var enableLoop = false
 }
