@@ -121,7 +121,7 @@ class CustomView @JvmOverloads constructor(
 
     var stat = Stat.none
 
-    fun isInCircle(pt0: PointF, pt1: PointF, r: Float = mRadiusPoint) = Math.pow((pt0.x - pt1.x).toDouble(), 2.0) + Math.pow((pt0.y - pt1.y).toDouble(), 2.0) <= r * r
+    fun isInCircle(pt0: PointF, pt1: PointF, r: Float = mRadiusPoint) = (pt0.x - pt1.x).let { it * it } + (pt0.y - pt1.y).let { it * it } <= r * r
 
     var toast: Toast? = null
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -131,7 +131,7 @@ class CustomView @JvmOverloads constructor(
         val p = PointF(x, y)
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                stat = if (isInCircle(p, startPt)) Stat.start else if (isInCircle(p, endPt)) Stat.end else Stat.none
+                stat = if (isInCircle(p, endPt)) Stat.end else if (isInCircle(p, startPt)) Stat.start else Stat.none
                 if (stat != Stat.none) {
                     return true
                 }
@@ -194,7 +194,7 @@ class CustomView @JvmOverloads constructor(
 
     var startPointMovable = false
 
-    var proportion:Float
+    var proportion: Float
         get() = value / maxValue
         @FloatRange(from = 0.0, to = 1.0, toInclusive = true)
         set(v) {
